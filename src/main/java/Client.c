@@ -3,6 +3,7 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdio.h>
+#include <pdh.h>
 
 #define DEFAULT_PORT "5000"
 
@@ -60,18 +61,60 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    const char *sendbuf = "Hello Server!";
-    iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-    if (iResult == SOCKET_ERROR)
-    {
-        printf("send failed: %d\n", WSAGetLastError());
-        closesocket(ConnectSocket);
-        freeaddrinfo(result);
-        WSACleanup();
+    // PDH (unfinished)
+
+    PDH_HQUERY hQuery = NULL;
+    PDH_STATUS pdhResult;
+    PDH_HCOUNTER hCounter;
+
+    pdhResult = PdhOpenQuery(NULL, 0, &hQuery);
+    
+    if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhOpenQuery failed with 0x%x\n", pdhResult);
+        return 1;
+    }
+    
+    pdhResult = PdhAddCounter(hQuery, "\\System\\Processes", 0, &hCounter);
+    
+    PDH_COUNTER_PATH_ELEMENTS counterPathElements = {
+        .szMachineName = NULL,
+        .szObjectName = "System",
+        .szInstanceName = NULL,
+        .szParentInstance = NULL,
+        .dwInstanceIndex = 0,
+        .szCounterName = "Processes"
+    };
+
+    // TODO: Finish the query creation
+
+    TCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH];
+    DWORD counterPathBufferSize = PDH_MAX_COUNTER_PATH;
+
+
+    pdhResult = PdhMakeCounterPath(&counterPathElements, counterPathBuffer, &counterPathBufferSize, 0);
+    if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhMakeCounterPath failed with 0x%x\n", pdhResult);
+        PdhCloseQuery(hQuery);
         return 1;
     }
 
-    printf("Bytes Sent: %ld\n", iResult);
+    printf("Counter Path: %ws\n", counterPathBuffer);
+
+
+
+
+    // const char *sendbuf = "Hello Server!";
+    // iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+    // if (iResult == SOCKET_ERROR)
+    // {
+    //     printf("send failed: %d\n", WSAGetLastError());
+    //     closesocket(ConnectSocket);
+    //     freeaddrinfo(result);
+    //     WSACleanup();
+    //     return 1;
+    // }
+
+    // printf("Bytes Sent: %ld\n", iResult);
 
     // char recvbuf[512];
     // iResult = recv(ConnectSocket, recvbuf, sizeof(recvbuf), 0);
