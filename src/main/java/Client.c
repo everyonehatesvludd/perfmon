@@ -96,6 +96,17 @@ int main(int argc, char const *argv[])
         printf("PdhMakeCounterPath failed with 0x%x\n", pdhResult);
         PdhCloseQuery(hQuery);
         return 1;
+    } else {
+        const char *sendbuf = counterPathBuffer;
+        iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+        if (iResult == SOCKET_ERROR)
+        {
+            printf("send failed: %d\n", WSAGetLastError());
+            closesocket(ConnectSocket);
+            freeaddrinfo(result);
+            WSACleanup();
+            return 1;
+        }
     }
 
     printf("Counter Path: %ws\n", counterPathBuffer);
