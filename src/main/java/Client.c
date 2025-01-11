@@ -76,40 +76,52 @@ int main(int argc, char const *argv[])
     
     pdhResult = PdhAddCounter(hQuery, "\\System\\Processes", 0, &hCounter);
     
-    PDH_COUNTER_PATH_ELEMENTS counterPathElements = {
-        .szMachineName = NULL,
-        .szObjectName = "System",
-        .szInstanceName = NULL,
-        .szParentInstance = NULL,
-        .dwInstanceIndex = 0,
-        .szCounterName = "Processes"
-    };
-
-    // TODO: Finish the query creation
-
-    TCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH];
-    DWORD counterPathBufferSize = PDH_MAX_COUNTER_PATH;
-
-
-    pdhResult = PdhMakeCounterPath(&counterPathElements, counterPathBuffer, &counterPathBufferSize, 0);
-    if (pdhResult != ERROR_SUCCESS) {
-        printf("PdhMakeCounterPath failed with 0x%x\n", pdhResult);
-        PdhCloseQuery(hQuery);
+   if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhAddCounter failed with 0x%x\n", pdhResult);
         return 1;
-    } else {
-        const char *sendbuf = counterPathBuffer;
-        iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-        if (iResult == SOCKET_ERROR)
-        {
-            printf("send failed: %d\n", WSAGetLastError());
-            closesocket(ConnectSocket);
-            freeaddrinfo(result);
-            WSACleanup();
-            return 1;
-        }
     }
 
-    printf("Counter Path: %ws\n", counterPathBuffer);
+    pdhResult = PdhCollectQueryData(hQuery);
+
+    if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhCollectQueryData failed with 0x%x\n", pdhResult);
+        return 1;
+    }
+
+    Sleep(1000);
+
+    pdhResult = PdhCollectQueryData(hQuery);
+
+    if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhCollectQueryData failed with 0x%x\n", pdhResult);
+        return 1;
+    }
+
+    PDH_FMT_COUNTERVALUE counterVal;
+
+    pdhResult = PdhGetFormattedCounterValue(hCounter, PDH_FMT_LONG, NULL, &counterVal);
+
+    if (pdhResult != ERROR_SUCCESS) {
+        printf("PdhGetFormattedCounterValue failed with 0x%x\n", pdhResult);
+        return 1;
+    }
+
+    printf("Processes: %d\n", counterVal.longValue);
+
+    long sendbuf = counterVal.longValue;
+    iResult = send(ConnectSocket, (const char *)&sendbuf, sizeof(sendbuf), 0);
+
+    if (iResult == SOCKET_ERROR) {
+        printf("send failed: %d\n", WSAGetLastError());
+        closesocket(ConnectSocket);
+        freeaddrinfo(result);
+        WSACleanup();
+        return 1;
+    }
+
+
+    
+
 
 
 

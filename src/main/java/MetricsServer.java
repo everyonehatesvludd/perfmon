@@ -1,6 +1,5 @@
-import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -18,11 +17,13 @@ public class MetricsServer {
         try (
                 ServerSocket server = new ServerSocket(Integer.parseInt(args[0]));
                 Socket socket = server.accept();
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+                // TODO: Issue with input stream
+                DataInputStream in = new DataInputStream(socket.getInputStream());
         ){
-            String clientInput;
-            while ((clientInput = in.readLine()) != null){
-                System.out.println(clientInput);
+            long clientInput;
+            while (in.available() > 0) {
+                clientInput = in.read();
+                System.out.println("Processes: " + clientInput);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
