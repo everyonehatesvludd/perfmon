@@ -17,13 +17,18 @@ public class MetricsServer {
         try (
                 ServerSocket server = new ServerSocket(Integer.parseInt(args[0]));
                 Socket socket = server.accept();
-                // TODO: Issue with input stream
-                DataInputStream in = new DataInputStream(socket.getInputStream());
+                // some shit with input stream, still need to fix
+                DataInputStream in = new DataInputStream(socket.getInputStream())
         ){
-            long clientInput;
-            while (in.available() > 0) {
-                clientInput = in.read();
-                System.out.println("Processes: " + clientInput);
+            while (true) {
+                try {
+                    long clientInput = in.readLong();
+                    System.out.println("Processes: " + clientInput);
+                } catch (IOException e) {
+                    System.err.println("Something went wrong");
+                    break;
+                }
+
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
