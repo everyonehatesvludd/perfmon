@@ -61,8 +61,6 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    // PDH (unfinished)
-
     PDH_HQUERY hQuery = NULL;
     PDH_STATUS pdhResult;
     PDH_HCOUNTER hCounter;
